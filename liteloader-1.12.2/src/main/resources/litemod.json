@@ -1,0 +1,9 @@
+{
+  "name": "${mod_name}",
+  "version": "${mod_version}",
+  "mcversion": "${mc_version}",
+  "revision": 0,
+  "author": "Fallen_Breath",
+  "description": "Let Litematica paste tile entity / entity NBT data on a server",
+  "modClass": "me.fallenbreath.lmspaster.LiteModLmsPaster"
+}
