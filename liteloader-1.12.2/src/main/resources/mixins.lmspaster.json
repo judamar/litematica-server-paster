@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "minVersion": "0.7.10",
+  "package": "me.fallenbreath.lmspaster.mixins",
+  "compatibilityLevel": "JAVA_8",
+  "client": [
+    "NetHandlerPlayClientMixin",
+    "TaskPasteSchematicSetblockMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

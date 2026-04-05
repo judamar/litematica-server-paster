@@ -1,0 +1,109 @@
+/*
+ * This file is part of the Litematica Server Paster project, licensed under the
+ * GNU Lesser General Public License v3.0
+ *
+ * Copyright (C) 2025  Fallen_Breath and contributors
+ */
+
+// LiteLoader 1.12.2 build configuration
+// Requires Gradle 4.x; run with: ./gradlew build
+// Uses ForgeGradle 2.3 for MCP mappings + LiteLoader as a compile-time dependency
+
+buildscript {
+    repositories {
+        maven { url = 'https://files.minecraftforge.net/maven' }
+        maven { url = 'https://jitpack.io' }
+        maven { url = 'https://oss.sonatype.org/content/repositories/snapshots/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle.tweaker-client'
+apply plugin: 'java'
+
+group   = project.maven_group
+version = project.mod_version + '-mc' + project.minecraft_version
+base.archivesBaseName = project.archives_base_name
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+minecraft {
+    version     = project.minecraft_version
+    mappings    = project.mcp_mappings
+    tweakClass  = 'com.mumfrey.liteloader.launch.LiteLoaderTweaker'
+    runDir      = 'run'
+}
+
+repositories {
+    // LiteLoader
+    maven { url = 'http://dl.liteloader.com/versions/' }
+    // SpongePowered Mixin
+    maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+    // Masa (malilib, litematica)
+    maven { url = 'https://masa.dy.fi/maven' }
+}
+
+configurations {
+    // Embed extra compile-time jars (mixin) into the output jar via shadow
+    embed
+    compile.extendsFrom(embed)
+}
+
+dependencies {
+    // LiteLoader (deobfuscated, provided by ForgeGradle)
+    deobfCompile "com.mumfrey:liteloader:${project.liteloader_version}@deobf"
+
+    // SpongePowered Mixin 0.7.x — the last version that supports Java 8 / MC 1.12.2
+    // Exclude heavy transitives that are already on the classpath
+    embed("org.spongepowered:mixin:${project.mixin_version}") {
+        exclude module: 'launchwrapper'
+        exclude module: 'guava'
+        exclude module: 'log4j-core'
+        exclude module: 'gson'
+    }
+
+    // Masa malilib for 1.12.2 (LiteLoader)
+    deobfCompile "fi.dy.masa.malilib:malilib-mc${project.malilib_mc_version}:${project.malilib_version}"
+
+    // Masa litematica for 1.12.2 (LiteLoader)
+    deobfCompile "fi.dy.masa.litematica:litematica-mc${project.litematica_mc_version}:${project.litematica_version}"
+}
+
+// Embed the mixin library and generate the required manifest entries
+jar {
+    from {
+        configurations.embed.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    manifest {
+        attributes(
+            'TweakClass':                    'com.mumfrey.liteloader.launch.LiteLoaderTweaker',
+            'MixinConfigs':                  'mixins.lmspaster.json',
+            'FMLCorePluginContainsFMLMod':   'false',
+            'ForceLoadAsMod':                'false',
+        )
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from(rootProject.file('../LICENSE')) {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+processResources {
+    def props = [
+        'mod_name':    project.mod_name,
+        'mod_version': project.mod_version,
+        'mc_version':  project.minecraft_version,
+    ]
+    inputs.properties(props)
+    filesMatching('litemod.json') {
+        expand props
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
