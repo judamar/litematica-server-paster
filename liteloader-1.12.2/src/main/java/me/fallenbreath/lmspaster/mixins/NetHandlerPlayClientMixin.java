@@ -55,4 +55,3 @@ public abstract class NetHandlerPlayClientMixin
         ClientNetworkHandler.sendHiToServer((NetHandlerPlayClient) (Object) this);
     }
 }
-
